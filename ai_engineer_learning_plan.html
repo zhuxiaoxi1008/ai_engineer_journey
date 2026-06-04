@@ -1,0 +1,724 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.container { padding: 1.5rem 0; }
+.phase-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.phase-tab { padding: 6px 14px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); font-size: 13px; cursor: pointer; background: var(--color-background-primary); color: var(--color-text-secondary); transition: all 0.15s; white-space: nowrap; }
+.phase-tab.active { background: #EEEDFE; color: #3C3489; border-color: #AFA9EC; font-weight: 500; }
+.phase-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.phase-meta { }
+.phase-title { font-size: 18px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+.phase-desc { font-size: 13px; color: var(--color-text-secondary); line-height: 1.5; max-width: 500px; }
+.phase-badge { background: #EEEDFE; color: #3C3489; font-size: 12px; padding: 4px 10px; border-radius: var(--border-radius-md); white-space: nowrap; }
+.week-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+.week-tab { padding: 4px 10px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary); font-size: 12px; cursor: pointer; background: var(--color-background-secondary); color: var(--color-text-secondary); }
+.week-tab.active { background: #E1F5EE; color: #085041; border-color: #5DCAA5; font-weight: 500; }
+.week-title { font-size: 15px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 1rem; }
+.day-grid { display: flex; flex-direction: column; gap: 10px; }
+.day-card { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; }
+.day-header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--color-background-secondary); cursor: pointer; user-select: none; }
+.day-label { font-size: 12px; font-weight: 500; color: #085041; background: #E1F5EE; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+.day-summary { font-size: 13px; font-weight: 500; color: var(--color-text-primary); flex: 1; }
+.day-chevron { font-size: 14px; color: var(--color-text-tertiary); transition: transform 0.2s; }
+.day-chevron.open { transform: rotate(180deg); }
+.day-body { display: none; padding: 14px; border-top: 0.5px solid var(--color-border-tertiary); }
+.day-body.open { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.col-block { }
+.col-title { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+.col-content { font-size: 13px; color: var(--color-text-primary); line-height: 1.6; }
+.col-content a { color: #185FA5; text-decoration: none; }
+.col-content a:hover { text-decoration: underline; }
+.resources-list { list-style: none; }
+.resources-list li { margin-bottom: 4px; }
+.resources-list li::before { content: "→ "; color: var(--color-text-tertiary); }
+.project-section { margin-top: 1.5rem; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-lg); overflow: hidden; }
+.project-header { background: #FAEEDA; padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
+.project-badge { background: #EF9F27; color: #412402; font-size: 12px; padding: 3px 10px; border-radius: var(--border-radius-md); font-weight: 500; }
+.project-title { font-size: 15px; font-weight: 500; color: #412402; }
+.project-body { padding: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+.project-col h4 { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-text-tertiary); margin-bottom: 8px; }
+.project-col ul { list-style: none; }
+.project-col ul li { font-size: 13px; color: var(--color-text-primary); line-height: 1.7; padding-left: 12px; position: relative; }
+.project-col ul li::before { content: "•"; position: absolute; left: 0; color: var(--color-text-tertiary); }
+.tech-tag { display: inline-block; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: 20px; padding: 2px 8px; font-size: 11px; color: var(--color-text-secondary); margin: 2px; }
+.progress-bar-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; }
+.progress-bar { flex: 1; height: 4px; background: var(--color-background-secondary); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 2px; background: #7F77DD; transition: width 0.3s; }
+.progress-text { font-size: 12px; color: var(--color-text-tertiary); white-space: nowrap; }
+</style>
+
+<h2 class="sr-only">AI软件开发工程师转型学习计划 — 40周互动课程表</h2>
+
+<div class="container">
+
+<div class="phase-tabs" id="phaseTabs"></div>
+
+<div id="phaseContent"></div>
+
+</div>
+
+<script>
+const plan = {
+  phases: [
+    {
+      id: 1,
+      title: "阶段一：AI基础理论与Python编程",
+      duration: "8周",
+      desc: "打牢Python编程基础，掌握数据处理与可视化，建立AI所需的数学基础，让前端思维平滑过渡到Python生态。",
+      weeks: [
+        {
+          title: "第1周：Python环境与基础语法",
+          days: [
+            { label:"Day 1", summary:"Python环境搭建与语法概览",
+              theory:"Anaconda安装、虚拟环境管理（conda/venv）、Jupyter Notebook使用、Python vs JavaScript语法对比",
+              practice:"完成10道Python基础练习：变量、字符串、列表操作；用Python实现FizzBuzz",
+              resources:[
+                {text:"Python官方文档", url:"https://docs.python.org/zh-cn/3/"},
+                {text:"廖雪峰Python教程", url:"https://www.liaoxuefeng.com/wiki/1016959663602400"},
+                {text:"Anaconda官方下载", url:"https://www.anaconda.com/download"}
+              ],
+              reflection:"记录JS与Python语法差异表，总结环境搭建遇到的问题"
+            },
+            { label:"Day 2", summary:"数据类型与控制结构",
+              theory:"list/tuple/dict/set深度解析、条件判断与循环、列表推导式（对比JS的map/filter）",
+              practice:"实现斐波那契数列、质数筛法、列表去重与排序；改写3个已知JS函数为Python",
+              resources:[
+                {text:"Real Python教程", url:"https://realpython.com/python-data-types/"},
+                {text:"Python可视化学习", url:"https://pythontutor.com/"},
+                {text:"W3Schools Python", url:"https://www.w3schools.com/python/"}
+              ],
+              reflection:"整理Python推导式语法，对比JavaScript的数组方法"
+            },
+            { label:"Day 3", summary:"函数与模块化编程",
+              theory:"函数定义、*args/**kwargs、装饰器基础、模块导入机制、命名空间",
+              practice:"实现一个工具函数库（数学计算、字符串处理、列表操作各5个）",
+              resources:[
+                {text:"Python函数教程", url:"https://docs.python.org/zh-cn/3/tutorial/controlflow.html#defining-functions"},
+                {text:"装饰器详解-知乎", url:"https://zhuanlan.zhihu.com/p/64487092"},
+                {text:"Python模块文档", url:"https://docs.python.org/zh-cn/3/tutorial/modules.html"}
+              ],
+              reflection:"理解装饰器模式，与前端HOC（高阶组件）的相似点"
+            },
+            { label:"Day 4", summary:"面向对象编程（OOP）",
+              theory:"类与对象、继承与多态、__init__/__str__等魔术方法、数据类dataclass",
+              practice:"实现一个简单的学生管理系统（CRUD），对比React中的Class组件",
+              resources:[
+                {text:"Python OOP教程-B站", url:"https://www.bilibili.com/video/BV1qW4y1a7fU/"},
+                {text:"Python数据类文档", url:"https://docs.python.org/zh-cn/3/library/dataclasses.html"},
+                {text:"OOP入门-廖雪峰", url:"https://www.liaoxuefeng.com/wiki/1016959663602400/1017496031185408"}
+              ],
+              reflection:"Python OOP与JavaScript原型链/Class的异同"
+            },
+            { label:"Day 5", summary:"文件I/O与异常处理",
+              theory:"文件读写（txt/csv/json）、with语句、异常捕获机制、自定义异常类",
+              practice:"读取CSV文件并统计数据；实现配置文件读写工具",
+              resources:[
+                {text:"Python文件操作文档", url:"https://docs.python.org/zh-cn/3/tutorial/inputoutput.html"},
+                {text:"Python CSV模块", url:"https://docs.python.org/zh-cn/3/library/csv.html"},
+                {text:"异常处理最佳实践", url:"https://realpython.com/python-exceptions/"}
+              ],
+              reflection:"总结文件操作的常见坑，对比Node.js的文件操作"
+            },
+            { label:"Day 6", summary:"NumPy基础：数组与矩阵",
+              theory:"ndarray核心概念、广播机制、向量化运算、矩阵操作（为后续线性代数打基础）",
+              practice:"用NumPy完成：矩阵乘法、统计计算、图像数组操作；对比纯Python的速度",
+              resources:[
+                {text:"NumPy官方文档", url:"https://numpy.org/doc/stable/"},
+                {text:"NumPy入门-B站", url:"https://www.bilibili.com/video/BV1E7411c7Yi/"},
+                {text:"NumPy从入门到精通", url:"https://zhuanlan.zhihu.com/p/339997406"}
+              ],
+              reflection:"理解向量化计算的思维方式，记录NumPy与JS Array的差异"
+            },
+            { label:"Day 7", summary:"周末项目：数据处理脚本",
+              theory:"综合回顾本周内容，了解Python包管理（pip、requirements.txt）",
+              practice:"开发一个命令行工具：读取CSV销售数据 → 清洗 → 统计分析 → 输出报告",
+              resources:[
+                {text:"Click命令行库", url:"https://click.palletsprojects.com/"},
+                {text:"Pandas快速入门", url:"https://pandas.pydata.org/docs/getting_started/10min.html"},
+                {text:"Python项目结构", url:"https://realpython.com/python-application-layouts/"}
+              ],
+              reflection:"梳理本周学习收获，记录一个让你印象深刻的Python特性"
+            }
+          ]
+        },
+        {
+          title: "第2周：Pandas数据处理与可视化",
+          days: [
+            { label:"Day 8", summary:"Pandas核心：DataFrame操作",
+              theory:"Series与DataFrame创建、索引与切片、merge/join操作（对比SQL JOIN）",
+              practice:"使用Titanic数据集完成：数据加载、缺失值处理、基本统计分析",
+              resources:[
+                {text:"Pandas官方文档", url:"https://pandas.pydata.org/docs/"},
+                {text:"10分钟入门Pandas", url:"https://pandas.pydata.org/docs/getting_started/10min.html"},
+                {text:"Pandas教程-知乎", url:"https://zhuanlan.zhihu.com/p/99889332"}
+              ],
+              reflection:"DataFrame与前端Table组件数据结构的对应关系"
+            },
+            { label:"Day 9", summary:"数据清洗与特征工程",
+              theory:"缺失值处理策略、异常值检测、数据标准化/归一化、类别变量编码",
+              practice:"处理一份真实的电商订单数据集（Kaggle），完成数据清洗Pipeline",
+              resources:[
+                {text:"Kaggle数据集", url:"https://www.kaggle.com/datasets"},
+                {text:"数据清洗指南", url:"https://realpython.com/python-data-cleaning-numpy-pandas/"},
+                {text:"特征工程实践", url:"https://zhuanlan.zhihu.com/p/111296130"}
+              ],
+              reflection:"总结数据清洗的标准流程，记录最常见的数据问题"
+            },
+            { label:"Day 10", summary:"Matplotlib与Seaborn可视化",
+              theory:"折线图/柱状图/散点图/热力图绘制、子图布局、可视化设计原则",
+              practice:"基于第9天的电商数据，绘制5种不同类型的可视化图表",
+              resources:[
+                {text:"Matplotlib官方教程", url:"https://matplotlib.org/stable/tutorials/"},
+                {text:"Seaborn教程", url:"https://seaborn.pydata.org/tutorial.html"},
+                {text:"数据可视化最佳实践", url:"https://zhuanlan.zhihu.com/p/65547408"}
+              ],
+              reflection:"Python可视化与前端D3.js/ECharts的比较"
+            },
+            { label:"Day 11", summary:"分组聚合与时间序列",
+              theory:"groupby操作、pivot_table、时间戳解析与重采样、滑动窗口",
+              practice:"分析一份股票或天气时间序列数据，绘制趋势图和周期性图表",
+              resources:[
+                {text:"Pandas时间序列文档", url:"https://pandas.pydata.org/docs/user_guide/timeseries.html"},
+                {text:"时间序列分析教程", url:"https://realpython.com/pandas-dataframe/"},
+                {text:"股票数据分析实例", url:"https://zhuanlan.zhihu.com/p/29519040"}
+              ],
+              reflection:"时间序列处理在AI数据准备中的重要性"
+            },
+            { label:"Day 12", summary:"数学基础：线性代数（一）",
+              theory:"向量与矩阵运算、点积与叉积、矩阵转置与逆矩阵、行列式的意义",
+              practice:"用NumPy实现线性代数基本运算，可视化向量变换过程",
+              resources:[
+                {text:"3Blue1Brown线性代数精粹", url:"https://www.bilibili.com/video/BV1ys411472E/"},
+                {text:"MIT线性代数公开课", url:"https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/"},
+                {text:"线性代数的本质-知乎", url:"https://zhuanlan.zhihu.com/p/26763512"}
+              ],
+              reflection:"理解矩阵运算在神经网络中的核心作用"
+            },
+            { label:"Day 13", summary:"数学基础：微积分与概率",
+              theory:"导数与梯度直觉理解、链式法则、概率分布（正态分布、贝叶斯定理）",
+              practice:"用Python绘制常见概率分布曲线，数值验证链式法则",
+              resources:[
+                {text:"3Blue1Brown微积分", url:"https://www.bilibili.com/video/BV1qW411N7FU/"},
+                {text:"可汗学院概率论", url:"https://www.khanacademy.org/math/statistics-probability"},
+                {text:"深度学习数学基础", url:"https://d2l.ai/chapter_preliminaries/index.html"}
+              ],
+              reflection:"记录让你理解梯度下降原理的关键知识点"
+            },
+            { label:"Day 14", summary:"综合练习与阶段总结",
+              theory:"回顾前两周内容，了解Scikit-learn生态概况",
+              practice:"用Pandas+Matplotlib完成一份完整的探索性数据分析（EDA）报告",
+              resources:[
+                {text:"EDA完整案例", url:"https://www.kaggle.com/code/kashnitsky/topic-1-exploratory-data-analysis-with-pandas"},
+                {text:"Scikit-learn简介", url:"https://scikit-learn.org/stable/getting_started.html"},
+                {text:"Python数据科学手册", url:"https://jakevdp.github.io/PythonDataScienceHandbook/"}
+              ],
+              reflection:"整理前两周的代码笔记，提交到GitHub"
+            }
+          ]
+        },
+        {
+          title: "第3-4周：数学基础深化与Scikit-learn",
+          days: [
+            { label:"Day 15-16", summary:"统计学基础与假设检验",
+              theory:"描述统计、假设检验（t检验/卡方检验）、相关性分析、方差分析",
+              practice:"用scipy.stats实现各种统计检验，分析数据集的统计特征",
+              resources:[
+                {text:"统计学习概论", url:"https://web.stanford.edu/~hastie/ElemStatLearn/"},
+                {text:"Scipy统计文档", url:"https://docs.scipy.org/doc/scipy/reference/stats.html"},
+                {text:"统计学基础-B站", url:"https://www.bilibili.com/video/BV1i7411d7aP/"}
+              ],
+              reflection:"统计思维在机器学习模型评估中的应用"
+            },
+            { label:"Day 17-18", summary:"Scikit-learn基础：预处理与特征选择",
+              theory:"Pipeline构建、特征缩放、特征选择方法、交叉验证",
+              practice:"构建一个完整的数据预处理Pipeline，应用于真实数据集",
+              resources:[
+                {text:"Scikit-learn官方文档", url:"https://scikit-learn.org/stable/"},
+                {text:"Sklearn用户指南", url:"https://scikit-learn.org/stable/user_guide.html"},
+                {text:"机器学习实战-GitHub", url:"https://github.com/ageron/handson-ml3"}
+              ],
+              reflection:"理解Pipeline在工程化机器学习中的重要性"
+            },
+            { label:"Day 19-21", summary:"经典机器学习算法入门",
+              theory:"线性回归、逻辑回归、决策树原理与参数调优",
+              practice:"用Scikit-learn分别实现三个算法，比较在不同数据集上的表现",
+              resources:[
+                {text:"Scikit-learn算法选择器", url:"https://scikit-learn.org/stable/tutorial/machine_learning_map/"},
+                {text:"机器学习速成课-Google", url:"https://developers.google.com/machine-learning/crash-course?hl=zh-cn"},
+                {text:"西瓜书（周志华）", url:"https://cs.nju.edu.cn/zhouzh/zhouzh.files/publication/MLbook2016.htm"}
+              ],
+              reflection:"理解偏差-方差权衡，记录模型调优的经验"
+            },
+            { label:"Day 22-28", summary:"集成方法与模型评估",
+              theory:"随机森林、梯度提升（XGBoost/LightGBM）、模型评估指标（AUC/F1）",
+              practice:"参加Kaggle入门竞赛（Titanic生存预测），提交第一个预测结果",
+              resources:[
+                {text:"XGBoost文档", url:"https://xgboost.readthedocs.io/en/stable/"},
+                {text:"Kaggle Titanic竞赛", url:"https://www.kaggle.com/competitions/titanic"},
+                {text:"机器学习评估指标", url:"https://zhuanlan.zhihu.com/p/46714763"}
+              ],
+              reflection:"Kaggle竞赛心得，记录排名提升的技巧"
+            }
+          ]
+        },
+        {
+          title: "第5-6周：深度学习准备与PyTorch入门",
+          days: [
+            { label:"Day 29-35", summary:"神经网络基础原理",
+              theory:"感知机→多层神经网络、前向传播、反向传播、激活函数（ReLU/Sigmoid/Softmax）",
+              practice:"用NumPy手写一个两层神经网络（不用框架），实现MNIST分类",
+              resources:[
+                {text:"动手学深度学习", url:"https://zh.d2l.ai/"},
+                {text:"神经网络与深度学习-邱锡鹏", url:"https://nndl.github.io/"},
+                {text:"CS231n斯坦福课程", url:"https://cs231n.github.io/"}
+              ],
+              reflection:"手写反向传播对理解框架的帮助"
+            },
+            { label:"Day 36-42", summary:"PyTorch核心API",
+              theory:"Tensor操作、autograd自动微分、nn.Module、Dataset/DataLoader",
+              practice:"用PyTorch重写NumPy神经网络；实现自定义Dataset类加载图片数据",
+              resources:[
+                {text:"PyTorch官方教程", url:"https://pytorch.org/tutorials/"},
+                {text:"PyTorch中文教程", url:"https://pytorch123.com/"},
+                {text:"动手学深度学习PyTorch版", url:"https://zh.d2l.ai/chapter_introduction/index.html"}
+              ],
+              reflection:"理解PyTorch的动态计算图优势"
+            }
+          ]
+        },
+        {
+          title: "第7-8周：阶段项目",
+          days: [
+            { label:"Day 43-49", summary:"项目开发：电商销售数据分析系统",
+              theory:"复习Pandas、Matplotlib、Scikit-learn；学习Flask基础（提前预热）",
+              practice:"开发电商数据分析项目：数据清洗→EDA→销量预测模型→可视化Dashboard",
+              resources:[
+                {text:"Flask快速入门", url:"https://flask.palletsprojects.com/en/3.0.x/quickstart/"},
+                {text:"Streamlit文档", url:"https://docs.streamlit.io/"},
+                {text:"电商数据分析案例", url:"https://www.kaggle.com/code/fabiendaniel/customer-segmentation"}
+              ],
+              reflection:"项目开发中的技术难点与解决方案"
+            },
+            { label:"Day 50-56", summary:"项目完善与部署",
+              theory:"Git工作流、项目文档编写、Streamlit部署",
+              practice:"完成项目：添加交互式Dashboard、编写README、部署到Streamlit Cloud",
+              resources:[
+                {text:"Streamlit Cloud部署", url:"https://streamlit.io/cloud"},
+                {text:"GitHub Actions入门", url:"https://docs.github.com/cn/actions/quickstart"},
+                {text:"项目文档最佳实践", url:"https://www.makeareadme.com/"}
+              ],
+              reflection:"阶段一总结：Python技能树完成度自评"
+            }
+          ]
+        }
+      ],
+      project: {
+        title: "电商销售数据分析与预测系统",
+        stack: ["Python", "Pandas", "Scikit-learn", "Matplotlib", "Streamlit"],
+        goals: ["多维度销售数据EDA分析", "销售额预测模型（RandomForest）", "客户分群（K-Means聚类）", "交互式可视化Dashboard"],
+        steps: ["数据收集与清洗（Kaggle电商数据集）", "探索性数据分析（EDA）", "特征工程与模型训练", "Streamlit Dashboard开发", "部署到Streamlit Cloud"]
+      }
+    },
+    {
+      id: 2,
+      title: "阶段二：机器学习与深度学习",
+      duration: "12周",
+      desc: "系统学习机器学习算法原理，深入PyTorch，掌握CNN/RNN/Transformer，完成工业级深度学习项目。",
+      weeks: [
+        {
+          title: "第1-2周：深度学习核心（CNN）",
+          days: [
+            { label:"Day 1-7", summary:"卷积神经网络原理与实践",
+              theory:"卷积层、池化层、批归一化、Dropout；LeNet→AlexNet→VGG架构演进",
+              practice:"用PyTorch实现CIFAR-10图像分类；实现数据增强策略",
+              resources:[
+                {text:"动手学深度学习CNN章节", url:"https://zh.d2l.ai/chapter_convolutional-neural-networks/index.html"},
+                {text:"CNN可视化工具", url:"https://poloclub.github.io/cnn-explainer/"},
+                {text:"PyTorch图像分类教程", url:"https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html"}
+              ],
+              reflection:"理解感受野概念，对比前端CSS滤镜与卷积的相似性"
+            },
+            { label:"Day 8-14", summary:"迁移学习与模型微调",
+              theory:"ImageNet预训练模型（ResNet/EfficientNet）、Fine-tuning策略、特征提取",
+              practice:"用ResNet50对自定义数据集进行迁移学习，准确率目标>90%",
+              resources:[
+                {text:"PyTorch迁移学习教程", url:"https://pytorch.org/tutorials/beginner/transfer_learning_tutorial.html"},
+                {text:"HuggingFace模型库", url:"https://huggingface.co/models"},
+                {text:"迁移学习综述-知乎", url:"https://zhuanlan.zhihu.com/p/27657904"}
+              ],
+              reflection:"迁移学习对解决小数据集问题的意义"
+            }
+          ]
+        },
+        {
+          title: "第3-4周：序列模型（RNN/LSTM/Transformer）",
+          days: [
+            { label:"Day 15-21", summary:"RNN与LSTM：序列建模",
+              theory:"RNN梯度消失问题、LSTM门控机制、GRU、双向RNN",
+              practice:"用LSTM实现情感分析分类器（使用中文影评数据集）",
+              resources:[
+                {text:"LSTM直觉理解", url:"https://colah.github.io/posts/2015-08-Understanding-LSTMs/"},
+                {text:"PyTorch序列模型教程", url:"https://pytorch.org/tutorials/beginner/nlp/sequence_models_tutorial.html"},
+                {text:"中文NLP数据集", url:"https://github.com/fighting41love/funNLP"}
+              ],
+              reflection:"序列建模与前端状态管理（Redux）的思维共性"
+            },
+            { label:"Day 22-28", summary:"Transformer与注意力机制",
+              theory:"Self-Attention原理、Multi-Head Attention、位置编码、Encoder-Decoder架构",
+              practice:"实现简化版Transformer用于文本分类；使用BERT fine-tuning",
+              resources:[
+                {text:"Attention Is All You Need论文", url:"https://arxiv.org/abs/1706.03762"},
+                {text:"Transformer图解", url:"https://jalammar.github.io/illustrated-transformer/"},
+                {text:"HuggingFace Transformers文档", url:"https://huggingface.co/docs/transformers/"}
+              ],
+              reflection:"理解注意力机制，这是LLM的核心基础"
+            }
+          ]
+        },
+        {
+          title: "第5-8周：NLP与大语言模型",
+          days: [
+            { label:"Day 29-42", summary:"NLP基础到LLM应用",
+              theory:"分词/词向量（Word2Vec/BERT）、文本生成策略、提示工程（Prompt Engineering）",
+              practice:"构建RAG（检索增强生成）系统；实现文本摘要与问答应用",
+              resources:[
+                {text:"LangChain文档", url:"https://python.langchain.com/docs/get_started/introduction"},
+                {text:"OpenAI API文档", url:"https://platform.openai.com/docs/introduction"},
+                {text:"LLM应用开发实战", url:"https://github.com/datawhalechina/llm-universe"}
+              ],
+              reflection:"理解LLM的能力边界与工程化应用的关键要素"
+            },
+            { label:"Day 43-56", summary:"多模态模型与生成式AI",
+              theory:"CLIP/Stable Diffusion原理、VAE与GAN基础、图文跨模态理解",
+              practice:"调用Stable Diffusion API实现图像生成；用CLIP实现文图检索",
+              resources:[
+                {text:"Stable Diffusion原理解析", url:"https://zhuanlan.zhihu.com/p/583124756"},
+                {text:"CLIP论文", url:"https://arxiv.org/abs/2103.00020"},
+                {text:"HuggingFace Diffusers", url:"https://huggingface.co/docs/diffusers/"}
+              ],
+              reflection:"多模态AI对前端交互设计的革命性影响"
+            }
+          ]
+        },
+        {
+          title: "第9-12周：阶段项目",
+          days: [
+            { label:"Day 57-84", summary:"项目：智能图像识别分类系统",
+              theory:"模型压缩（量化/剪枝）、ONNX导出、A/B测试模型",
+              practice:"完整实现：数据集准备→模型训练→评估→导出→Python推理服务",
+              resources:[
+                {text:"ONNX官方文档", url:"https://onnx.ai/onnx/"},
+                {text:"模型压缩综述", url:"https://zhuanlan.zhihu.com/p/138059904"},
+                {text:"Weights & Biases实验管理", url:"https://wandb.ai/site"}
+              ],
+              reflection:"工业级深度学习项目与课程项目的差距"
+            }
+          ]
+        }
+      ],
+      project: {
+        title: "工业零件缺陷检测系统",
+        stack: ["PyTorch", "ResNet50", "OpenCV", "FastAPI", "Docker"],
+        goals: ["工业图像数据集构建与增强", "迁移学习训练检测模型（mAP>92%）", "FastAPI推理服务接口", "Web端实时预览结果"],
+        steps: ["收集/标注工业零件数据集（或使用MVTec AD）", "数据增强与预处理Pipeline", "ResNet50迁移学习微调", "模型评估与优化（混淆矩阵/PR曲线）", "导出ONNX，构建FastAPI服务", "Docker容器化部署"]
+      }
+    },
+    {
+      id: 3,
+      title: "阶段三：AI工程实践与模型部署",
+      duration: "10周",
+      desc: "掌握MLOps工具链，学习模型服务化、容器化部署，构建生产级AI API，对接前端消费层。",
+      weeks: [
+        {
+          title: "第1-2周：FastAPI与模型服务化",
+          days: [
+            { label:"Day 1-7", summary:"FastAPI构建AI推理服务",
+              theory:"FastAPI异步路由、Pydantic数据验证、依赖注入、OpenAPI文档自动生成",
+              practice:"将阶段二的图像分类模型包装成REST API，实现上传图片→返回预测结果",
+              resources:[
+                {text:"FastAPI官方文档", url:"https://fastapi.tiangolo.com/zh/"},
+                {text:"FastAPI最佳实践", url:"https://github.com/zhanymkanov/fastapi-best-practices"},
+                {text:"AI服务化教程", url:"https://testdriven.io/blog/fastapi-machine-learning/"}
+              ],
+              reflection:"FastAPI与前端BFF（Backend for Frontend）模式的结合"
+            },
+            { label:"Day 8-14", summary:"异步任务与模型缓存",
+              theory:"Celery任务队列、Redis缓存策略、模型热加载、并发推理处理",
+              practice:"为AI API添加异步任务支持（大图片批量处理）、Redis缓存推理结果",
+              resources:[
+                {text:"Celery文档", url:"https://docs.celeryq.dev/en/stable/"},
+                {text:"Redis Python客户端", url:"https://redis-py.readthedocs.io/en/stable/"},
+                {text:"异步AI推理架构", url:"https://zhuanlan.zhihu.com/p/415500900"}
+              ],
+              reflection:"异步架构对AI服务吞吐量的影响"
+            }
+          ]
+        },
+        {
+          title: "第3-4周：Docker与容器化",
+          days: [
+            { label:"Day 15-28", summary:"Docker容器化AI服务",
+              theory:"Dockerfile编写、multi-stage build、docker-compose编排、GPU容器（nvidia-docker）",
+              practice:"将AI推理服务容器化；用docker-compose编排API+Redis+Celery",
+              resources:[
+                {text:"Docker官方文档", url:"https://docs.docker.com/"},
+                {text:"Docker从入门到实践", url:"https://vuepress.mirror.docker-practice.com/"},
+                {text:"NVIDIA Container Toolkit", url:"https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/"}
+              ],
+              reflection:"容器化对AI服务一致性部署的核心价值"
+            }
+          ]
+        },
+        {
+          title: "第5-6周：云部署与监控",
+          days: [
+            { label:"Day 29-42", summary:"云端部署与CI/CD",
+              theory:"AWS/阿里云ECS部署、Nginx反向代理、HTTPS配置、GitHub Actions CI/CD",
+              practice:"将容器化服务部署到云服务器，配置HTTPS与自动部署流水线",
+              resources:[
+                {text:"阿里云ECS入门", url:"https://help.aliyun.com/zh/ecs/getting-started/"},
+                {text:"Nginx配置指南", url:"https://nginx.org/en/docs/beginners_guide.html"},
+                {text:"GitHub Actions部署教程", url:"https://docs.github.com/zh/actions/deployment"}
+              ],
+              reflection:"云部署遇到的网络与权限问题的解决思路"
+            }
+          ]
+        },
+        {
+          title: "第7-10周：MLOps与阶段项目",
+          days: [
+            { label:"Day 43-70", summary:"MLOps工具链与生产实践",
+              theory:"实验追踪（MLflow）、模型版本管理、A/B测试、模型监控与漂移检测",
+              practice:"构建完整MLOps流水线：数据版本→训练→评估→部署→监控",
+              resources:[
+                {text:"MLflow官方文档", url:"https://mlflow.org/docs/latest/index.html"},
+                {text:"DVC数据版本控制", url:"https://dvc.org/doc"},
+                {text:"MLOps最佳实践-Google", url:"https://cloud.google.com/architecture/mlops-continuous-delivery-and-automation-pipelines-in-machine-learning"}
+              ],
+              reflection:"MLOps在大厂AI团队的实际应用方式"
+            }
+          ]
+        }
+      ],
+      project: {
+        title: "生产级AI图像识别API服务",
+        stack: ["FastAPI", "PyTorch", "Docker", "Redis", "Nginx", "GitHub Actions"],
+        goals: ["RESTful AI推理API（图像分类+目标检测）", "异步批量处理支持", "完整Docker容器编排", "CI/CD自动部署流水线", "API监控Dashboard"],
+        steps: ["设计API接口规范（OpenAPI）", "实现FastAPI推理服务", "集成Redis缓存与Celery任务队列", "Docker容器化与docker-compose编排", "云服务器部署+Nginx+HTTPS", "GitHub Actions自动部署", "接入监控与告警"]
+      }
+    },
+    {
+      id: 4,
+      title: "阶段四：前端与AI结合开发",
+      duration: "10周",
+      desc: "发挥前端优势，掌握Web端AI应用开发、LLM集成、ONNX模型浏览器端推理，打造AI驱动的用户体验。",
+      weeks: [
+        {
+          title: "第1-2周：前端调用AI API",
+          days: [
+            { label:"Day 1-7", summary:"React+TypeScript对接AI服务",
+              theory:"流式响应（SSE/WebSocket）、AI API鉴权设计、前端错误处理与重试策略",
+              practice:"构建AI对话前端：实现流式文字打印效果、对话历史管理、Loading骨架屏",
+              resources:[
+                {text:"OpenAI API前端集成", url:"https://platform.openai.com/docs/guides/streaming"},
+                {text:"Vercel AI SDK", url:"https://sdk.vercel.ai/docs"},
+                {text:"SSE前端实现", url:"https://developer.mozilla.org/zh-CN/docs/Web/API/EventSource"}
+              ],
+              reflection:"流式响应对用户感知延迟的优化效果"
+            },
+            { label:"Day 8-14", summary:"AI结果渲染与交互设计",
+              theory:"Markdown渲染、代码高亮、富文本AI输出处理、乐观更新（Optimistic Update）",
+              practice:"实现ChatGPT风格的对话界面：Markdown渲染、代码复制、消息编辑",
+              resources:[
+                {text:"react-markdown文档", url:"https://github.com/remarkjs/react-markdown"},
+                {text:"Prism.js代码高亮", url:"https://prismjs.com/"},
+                {text:"AI聊天UI设计指南", url:"https://uxdesign.cc/designing-ai-chat-interfaces-aa21fa0b8b5c"}
+              ],
+              reflection:"AI界面UX与传统前端UX的核心差异"
+            }
+          ]
+        },
+        {
+          title: "第3-4周：ONNX浏览器端推理",
+          days: [
+            { label:"Day 15-28", summary:"ONNX.js与TensorFlow.js",
+              theory:"浏览器端推理原理、WebGL/WebGPU加速、模型量化压缩、Worker线程推理",
+              practice:"将PyTorch模型→ONNX→浏览器端推理；实现实时摄像头目标检测",
+              resources:[
+                {text:"ONNX Runtime Web", url:"https://onnxruntime.ai/docs/get-started/with-javascript/web.html"},
+                {text:"TensorFlow.js文档", url:"https://www.tensorflow.org/js"},
+                {text:"浏览器AI推理最佳实践", url:"https://huggingface.co/docs/transformers.js"}
+              ],
+              reflection:"浏览器端推理与服务端推理的适用场景判断"
+            }
+          ]
+        },
+        {
+          title: "第5-6周：AI驱动的前端体验优化",
+          days: [
+            { label:"Day 29-42", summary:"智能推荐与个性化UI",
+              theory:"前端埋点设计、用户行为数据收集、A/B测试框架、AI驱动内容个性化",
+              practice:"实现基于用户行为的智能内容推荐组件；构建A/B测试框架",
+              resources:[
+                {text:"Google Optimize替代方案", url:"https://developers.google.com/analytics/devguides/collection/ga4/experiments"},
+                {text:"前端推荐系统设计", url:"https://zhuanlan.zhihu.com/p/114590897"},
+                {text:"Mixpanel前端埋点", url:"https://docs.mixpanel.com/docs/tracking-methods/sdks/javascript"}
+              ],
+              reflection:"AI个性化对前端组件设计模式的影响"
+            }
+          ]
+        },
+        {
+          title: "第7-10周：综合项目开发",
+          days: [
+            { label:"Day 43-56", summary:"AI绘画Web应用开发",
+              theory:"Stable Diffusion API集成、图片上传与处理、WebSocket实时进度推送",
+              practice:"开发AI绘画平台：文字生图、图图变换、风格迁移、生成历史管理",
+              resources:[
+                {text:"Stable Diffusion WebUI API", url:"https://github.com/AUTOMATIC1111/stable-diffusion-webui/wiki/API"},
+                {text:"Replicate API文档", url:"https://replicate.com/docs"},
+                {text:"ComfyUI API", url:"https://github.com/comfyanonymous/ComfyUI"}
+              ],
+              reflection:"AI图像生成的用户体验设计要点"
+            },
+            { label:"Day 57-70", summary:"项目完善、性能优化与部署",
+              theory:"前端性能优化（图片懒加载/虚拟滚动）、SEO、PWA、Vercel/阿里云部署",
+              practice:"完成AI绘画应用：添加用户系统、作品广场、性能优化、全栈部署",
+              resources:[
+                {text:"Vercel部署文档", url:"https://vercel.com/docs"},
+                {text:"Next.js App Router", url:"https://nextjs.org/docs/app"},
+                {text:"前端性能优化指南", url:"https://web.dev/performance/"}
+              ],
+              reflection:"全栈AI应用的架构设计经验总结"
+            }
+          ]
+        }
+      ],
+      project: {
+        title: "AI创意工作室 Web应用",
+        stack: ["Next.js", "TypeScript", "TailwindCSS", "Python FastAPI", "Stable Diffusion", "ONNX Runtime Web"],
+        goals: ["文字生图、图图变换、风格迁移", "浏览器端实时人脸检测（ONNX）", "AI对话助手（GPT流式输出）", "用户作品广场与社区功能", "完整的登录/鉴权/付费体系"],
+        steps: ["技术选型与架构设计", "后端：FastAPI+Stable Diffusion服务", "前端：Next.js页面开发", "ONNX浏览器端推理集成", "用户系统（NextAuth.js）", "作品广场与CDN图片存储", "Vercel+阿里云混合部署", "性能优化与SEO"]
+      }
+    }
+  ]
+};
+
+let activePhase = 0;
+let activeWeek = 0;
+const openDays = new Set();
+
+function renderPhaseTabs() {
+  const el = document.getElementById('phaseTabs');
+  el.innerHTML = plan.phases.map((p,i) => `
+    <button class="phase-tab${i===activePhase?' active':''}" onclick="setPhase(${i})">
+      阶段${p.id}：${p.duration}
+    </button>
+  `).join('');
+}
+
+function renderPhaseContent() {
+  const phase = plan.phases[activePhase];
+  const el = document.getElementById('phaseContent');
+  el.innerHTML = `
+    <div class="phase-header">
+      <div class="phase-meta">
+        <div class="phase-title">${phase.title}</div>
+        <div class="phase-desc">${phase.desc}</div>
+      </div>
+      <div class="phase-badge">共 ${phase.duration}</div>
+    </div>
+    <div class="week-tabs" id="weekTabs">${phase.weeks.map((w,i)=>`
+      <button class="week-tab${i===activeWeek?' active':''}" onclick="setWeek(${i})">${w.title.split('：')[0]}</button>
+    `).join('')}</div>
+    <div class="week-title">${phase.weeks[activeWeek].title}</div>
+    <div class="day-grid">${renderDays(phase.weeks[activeWeek].days)}</div>
+    ${renderProject(phase.project)}
+  `;
+}
+
+function renderDays(days) {
+  return days.map((d,i) => {
+    const key = `${activePhase}-${activeWeek}-${i}`;
+    const isOpen = openDays.has(key);
+    return `
+      <div class="day-card">
+        <div class="day-header" onclick="toggleDay('${key}')">
+          <span class="day-label">${d.label}</span>
+          <span class="day-summary">${d.summary}</span>
+          <i class="ti ti-chevron-down day-chevron${isOpen?' open':''}" aria-hidden="true"></i>
+        </div>
+        <div class="day-body${isOpen?' open':''}">
+          <div class="col-block">
+            <div class="col-title"><i class="ti ti-book" aria-hidden="true"></i>理论学习</div>
+            <div class="col-content">${d.theory}</div>
+          </div>
+          <div class="col-block">
+            <div class="col-title"><i class="ti ti-code" aria-hidden="true"></i>编码实践</div>
+            <div class="col-content">${d.practice}</div>
+          </div>
+          <div class="col-block">
+            <div class="col-title"><i class="ti ti-link" aria-hidden="true"></i>学习资源</div>
+            <ul class="resources-list">
+              ${d.resources.map(r=>`<li><a href="${r.url}" target="_blank" rel="noopener">${r.text}</a></li>`).join('')}
+            </ul>
+          </div>
+          <div class="col-block">
+            <div class="col-title"><i class="ti ti-pencil" aria-hidden="true"></i>总结反思</div>
+            <div class="col-content" style="color:var(--color-text-secondary)">${d.reflection}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderProject(p) {
+  return `
+    <div class="project-section" style="margin-top:1.5rem">
+      <div class="project-header">
+        <span class="project-badge">阶段项目</span>
+        <span class="project-title">${p.title}</span>
+      </div>
+      <div class="project-body">
+        <div class="project-col">
+          <h4>技术栈</h4>
+          <div>${p.stack.map(t=>`<span class="tech-tag">${t}</span>`).join('')}</div>
+        </div>
+        <div class="project-col">
+          <h4>项目目标</h4>
+          <ul>${p.goals.map(g=>`<li>${g}</li>`).join('')}</ul>
+        </div>
+        <div class="project-col">
+          <h4>开发步骤</h4>
+          <ul>${p.steps.map(s=>`<li>${s}</li>`).join('')}</ul>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function setPhase(i) {
+  activePhase = i;
+  activeWeek = 0;
+  openDays.clear();
+  renderPhaseTabs();
+  renderPhaseContent();
+}
+
+function setWeek(i) {
+  activeWeek = i;
+  openDays.clear();
+  renderPhaseContent();
+}
+
+function toggleDay(key) {
+  if(openDays.has(key)) openDays.delete(key);
+  else openDays.add(key);
+  renderPhaseContent();
+}
+
+renderPhaseTabs();
+renderPhaseContent();
+</script>
